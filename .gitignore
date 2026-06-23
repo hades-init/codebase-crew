@@ -1,8 +1,9 @@
 # local data
 logs/
+data/
 
 # agent workspace
-.workspace
+workspace/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

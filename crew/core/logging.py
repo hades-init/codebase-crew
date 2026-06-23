@@ -31,3 +31,4 @@ def setup_logging():
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
     logging.getLogger("anthropic").setLevel(logging.INFO)
+    logging.getLogger("langsmith").setLevel(logging.WARNING)

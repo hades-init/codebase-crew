@@ -2,6 +2,9 @@ import argparse
 import logging
 from typing import cast
 
+from langgraph.checkpoint.sqlite import SqliteSaver
+
+from crew.core.db import get_conn
 from crew.core.github_client import get_issue
 from crew.core.logging import setup_logging
 from crew.graph import build_graph
@@ -31,7 +34,12 @@ def main() -> None:
     logger.info("Fetching issue #%d", args.issue)
     issue = get_issue(args.issue)
 
-    graph = build_graph()
+    conn = get_conn()
+    checkpointer = SqliteSaver(conn)
+
+    graph = build_graph(checkpointer)
+    config = {"configurable": {"thread_id": f"issue-{issue.number}"}}
+
     result = graph.invoke(
         cast(
             State,
@@ -40,10 +48,17 @@ def main() -> None:
                 "issue_title": issue.title,
                 "issue_body": issue.body,
             },
-        )
+        ),
+        config=config,  # type: ignore[call-arg]
     )
 
-    logger.info("Done. Issue #%d: {issue_type: %s}", issue.number, result.get("issue_type"))
+    logger.info(
+        "Done. Issue #%d type=%s tests_passed=%s pr_url=%s",
+        issue.number,
+        result.get("issue_type"),
+        result.get("tests_passed"),
+        result.get("pr_url"),
+    )
 
 
 if __name__ == "__main__":

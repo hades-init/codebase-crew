@@ -34,7 +34,9 @@ def _get_client() -> ChatAnthropic:
 
 def classify(state: State) -> dict:
     llm = _get_client()
-    user_content = f"Issue Title: {state['issue_title']}\n\nIssue Body:\n{state['issue_body']}"
+    user_content = (
+        f"Issue #{state['issue_number']}: {state['issue_title']}\n\n{state['issue_body']}"
+    )
     messages = [
         SystemMessage(content=SYSTEM_PROMPT),
         HumanMessage(content=user_content),
