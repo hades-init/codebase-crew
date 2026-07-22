@@ -8,20 +8,21 @@ logger = logging.getLogger(__name__)
 
 
 def human_gate(state: State) -> dict:
-    """Show the proposed changes + test results and ask human to approve a pull request."""
-    print("\n" + "=" * 72)
-    print(f"Issue #{state['issue_number']}: {state['issue_title']}")
-    print(f"Branch: {state['branch_name']}")
-    print("-" * 72 + "\nDIFF:\n")
-    print(state["diff"] or "(empty)")
-    print("-" * 72 + "\nTEST RESULTS:\n")
-    print(state["test_results"])
-    print("=" * 72)
+    """Pause for human approval before opening a PR. Carries the review context
+    in the interrupt payload; the client renders it and supplies the answer."""
 
-    approved = interrupt("Open a draft PR for these changes? [y/N] ").strip().lower() in (
-        "y",
-        "yes",
+    answer = interrupt(
+        {
+            "issue_number": state["issue_number"],
+            "issue_title": state["issue_title"],
+            "branch_name": state["branch_name"],
+            "diff": state["diff"],
+            "test_results": state["test_results"],
+            "prompt": "Open a draft PR for these changes? [y/N]",
+        }
     )
+
+    approved = str(answer).strip().lower() in ("y", "yes")
     logger.info("Human gate: approved=%s", approved)
     return {
         "approved": approved,

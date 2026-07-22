@@ -18,12 +18,25 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-_TOOLS = [file_tools.read_file]
+_TOOLS = [file_tools.read_file, file_tools.search]
 
-SYSTEM_PROMPT = """You are a code review agent.
-You are given a GitHub bug report/issue, the fix plan, fixed code diff and test results.
-Review the code changes give your review - feedback and final verdict 
-using only the structured output format"""
+SYSTEM_PROMPT = """You are the code reviewing agent in an automated bug-fixing crew.
+
+You are given the original bug report/issue, the structured fix plan, the unified diff the coder
+produced, and the test results. Decide whether this change should be opened as a pull request.
+
+Use the read-only tools (read_file, search) to inspect the changed files in full context
+before judging — a diff alone hides the surrounding code.
+
+Approve only if ALL of these hold:
+- The change fixes the root cause in the issue, not just the symptom.
+- It is minimal and focused — no unrelated edits, dead code, or reformatting.
+- Tests pass with no regressions, AND the fix is covered by a meaningful test. 
+  For a latent bug, a regression test that would fail on the OLD code must have been added.
+- The code matches the surrounding style and conventions.
+
+Otherwise reject with specific, actionable feedback the coder should act on (name the files and
+what to change). Do not rewrite the code yourself — plan/critique only."""
 
 
 @cache
@@ -44,9 +57,9 @@ def _create_agent(model: BaseChatModel, recursion_limit: int = 25):
 def review(state: State) -> dict:
     user_content = (
         f"Issue #{state['issue_number']}: {state['issue_title']}\n\n{state['issue_body']}\n\n"
-        f"Fix plan:\n{state['plan']}\n\n"
-        f"Git diff:\n{state['diff']}\n\n"
-        f"Test results:\n{state['test_results']}"
+        f"## Plan\n{state['plan']}\n\n"
+        f"## Diff\n{state['diff']}\n\n"
+        f"## Test results\n{state['test_results']}"
     )
 
     agent = _create_agent(_get_client())

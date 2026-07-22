@@ -21,6 +21,7 @@ def setup_workspace(state: State) -> dict:
         "repo_path": str(repo.repo_path),
         "branch_name": branch,
         "baseline_failures": baseline,
+        "revision_count": 0,
         "messages": [
             {
                 "node": "setup",

@@ -7,10 +7,14 @@ class State(TypedDict):
     issue_title: str
     issue_body: str
     issue_type: Literal["bug", "feature", "invalid", "needs_info"]
+    comment: str
+    labels: list[str]
+    # labels: Annotated[list[str], operator.add]
 
     repo_path: str
     branch_name: str
     baseline_failures: list[str]
+    reproduced: bool
 
     plan: str
     target_files: list[str]

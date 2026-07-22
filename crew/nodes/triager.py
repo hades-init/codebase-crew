@@ -5,6 +5,7 @@ from langchain.messages import HumanMessage, SystemMessage
 from langchain_anthropic import ChatAnthropic
 
 from crew.core.config import settings
+from crew.core.github_client import IssueLabel
 from crew.models import Classification
 from crew.state import State
 
@@ -42,13 +43,16 @@ def classify(state: State) -> dict:
         HumanMessage(content=user_content),
     ]
     result = llm.with_structured_output(Classification).invoke(messages)
+    issue_type = result.issue_type  # type: ignore[union-attr]
 
     return {
-        "issue_type": result.issue_type,  # type: ignore[union-attr]
+        "issue_type": issue_type,  # type: ignore[union-attr]
+        "comment": f"Triage: {issue_type}",  # type: ignore[union-attr]
+        "labels": [IssueLabel.TRIAGED_LABEL.value],
         "messages": [
             {
                 "node": "triager",
-                "content": f"classification: issue_type={result.issue_type}",  # type: ignore[union-attr]
+                "content": f"classification: issue_type={issue_type}",  # type: ignore[union-attr]
             }
         ],
     }

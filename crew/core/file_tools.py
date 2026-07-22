@@ -23,7 +23,7 @@ MAX_SEARCH_RESULTS = 100
 MAX_FILE_BYTES = 256 * 1024
 
 # Files the crew must not see.
-BLOCKED_FILES = ["docs/ANSWER_KEY.md"]
+BLOCKED_FILES = ["docs/ANSWER_KEY.md", ".gitignore"]
 
 # Directories the crew must not see or search
 EXCLUDE_DIRS = {
@@ -81,7 +81,7 @@ def list_dir(directory: str = ".") -> str:
     root = _root()
     base = root if directory in ("", ".") else _resolve(directory)
     if not base.is_dir():
-        raise FileNotFoundError(f"Invalid directory: {directory!r}")
+        return f"Invalid directory: {directory!r}"
     paths = [p.relative_to(root).as_posix() for p in _iter_files(base)]
     return "\n".join(paths) if paths else "Directory is empty (no files found)."
 
@@ -146,7 +146,7 @@ def search(query: str, subdir: str = ".") -> str:
     root = _root()
     base = root if subdir in ("", ".") else _resolve(subdir)
     if not base.is_dir():
-        raise FileNotFoundError(f"Invalid directory: {subdir!r}")
+        return f"Invalid directory: {subdir!r}"
 
     matches: list[str] = []
     for p in _iter_files(base):
@@ -192,3 +192,56 @@ def edit_file(path: str, old_string: str, new_string: str, replace_all: bool = F
     text = text.replace(old_string, new_string)
     target.write_text(text, encoding="utf-8")
     return f"Replaced {count} occurrence(s) in {path!r}."
+
+
+# --- Tools for writing regression tests ---
+
+TESTS_DIR = "tests"
+
+
+def _resolve_test(path: str) -> str:
+    """Resolve a path and additionally require it to live under `tests/` directory"""
+    target = _resolve(path)  # repo-confinement + blocked-file checks
+    rel = target.relative_to(_root()).as_posix()
+    if rel != TESTS_DIR and not rel.startswith(f"{TESTS_DIR}/"):
+        raise ValueError(f"Refused: may only write under '{TESTS_DIR}/', not {path!r}.")
+    return rel
+
+
+@tool
+def write_test_file(path: str, content: str) -> str:
+    """Write content to a file in the test suite, truncating it first if it exists.
+
+    Args:
+        path: Repo-relative path of the file to write.
+        content: Full content to write to the file.
+    """
+    try:
+        _resolve_test(path)
+    except ValueError as e:
+        return f"Exception raised when running tool: \n{e}"
+    return write_file.invoke({"path": path, "content": content})
+
+
+@tool
+def edit_test_file(path: str, old_string: str, new_string: str, replace_all: bool = False) -> str:
+    """Replace text in a file under the test suite.
+
+    Args:
+        path: Repo-relative path of the file to edit.
+        old_string: Exact text to replace. Must be unique unless replace_all is True.
+        new_string: Text to replace it with.
+        replace_all: Replace every occurrence instead of requiring a unique match.
+    """
+    try:
+        _resolve_test(path)
+    except ValueError as e:
+        return f"Exception raised when running tool: \n{e}"
+    return write_file.invoke(
+        {
+            "path": path,
+            "old_string": old_string,
+            "new_string": new_string,
+            "replace_all": replace_all,
+        }
+    )

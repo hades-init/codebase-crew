@@ -20,7 +20,8 @@ def _get_repo():
 # issue labels
 class IssueLabel(Enum):
     TRIAGED_LABEL = "triaged"
-    PR_OPENED = "pr-opened"
+    PR_OPENED = "pr opened"
+    NEEDS_HUMAN = "needs human"  # escalation
 
 
 def get_issue(number: int) -> Issue:

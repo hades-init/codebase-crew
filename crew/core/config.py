@@ -37,9 +37,12 @@ class Settings(BaseSettings):
 
     # Model
     TRIAGER_MODEL: str = "claude-haiku-4-5"  # "claude-sonnet-4-6"
-    PLANNER_MODEL: str = "claude-opus-4-7"  # "claude-opus-4-7" / "claude-opus-4-8"
-    CODER_MODEL: str = "claude-opus-4-7"  # "claude-opus-4-7" / "claude-opus-4-8"
-    REVIEWER_MODEL: str = "claude-opus-4-7"  # "claude-opus-4-7" / "claude-opus-4-8"
+    PLANNER_MODEL: str = "claude-opus-4-8"
+    CODER_MODEL: str = "claude-opus-4-8"
+    REVIEWER_MODEL: str = "claude-opus-4-8"
+
+    # max code revisions
+    MAX_REVISIONS: int = 3
 
     # Sqlite DB for state persistance
     CHECKPOINT_DATABASE: Path = PROJECT_ROOT / "data/sqlite/checkpoints.sqlite"

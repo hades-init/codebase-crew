@@ -2,6 +2,7 @@ import argparse
 import logging
 from typing import cast
 
+from langgraph.types import Command
 from langgraph.checkpoint.sqlite import SqliteSaver
 
 from crew.core.db import get_conn
@@ -27,6 +28,17 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _render_gate(payload: dict) -> None:
+    print("\n" + "=" * 72)
+    print(f"Issue #{payload['issue_number']}: {payload['issue_title']}")
+    print(f"Branch: {payload['branch_name']}")
+    print("-" * 72 + "\nDIFF:\n")
+    print(payload["diff"] or "(empty)")
+    print("-" * 72 + "\nTEST RESULTS:\n")
+    print(payload["test_results"])
+    print("=" * 72)
+
+
 def main() -> None:
     setup_logging()
     args = parse_args()
@@ -49,8 +61,14 @@ def main() -> None:
                 "issue_body": issue.body,
             },
         ),
-        config=config,  # type: ignore[call-arg]
+        config=config,  # type: ignore[call-type]
     )
+
+    while "__interrupt__" in result:
+        payload = result["__interrupt__"][0].value
+        _render_gate(payload)
+        answer = input(f"\n{payload['prompt']}: ")
+        result = graph.invoke(Command(resume=answer), config=config)  # type: ignore[arg-type]
 
     logger.info(
         "Done. Issue #%d type=%s tests_passed=%s pr_url=%s",

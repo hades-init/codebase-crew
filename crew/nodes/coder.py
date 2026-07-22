@@ -34,6 +34,10 @@ Guidelines:
 - Do not fix unrelated issues, reformat files, or touch tests unless the plan says so.
 - After applying all changes, briefly state what you changed, then stop."""
 
+# A failing regression test that captures this bug already exists in the suite. Your job is
+# to make it pass by fixing the SOURCE — do not modify, weaken, or delete any test. You can
+# only write source files; test paths are refused.
+
 
 @cache
 def _get_client() -> ChatAnthropic:
@@ -51,13 +55,21 @@ def _create_agent(model: BaseChatModel, recursion_limit: int = 25):
 @traceable(name="coder", run_type="chain")
 def write_code(state: State) -> dict:
     user_content = (
-        f"Issue #{state['issue_number']}: {state['issue_title']}\n\n"
+        f"Issue #{state['issue_number']}: {state['issue_title']}\n{state['issue_body']}\n\n"
         f"Fix plan:\n{state['plan']}\n\n"
         f"Target files: {', '.join(state['target_files'])}"
     )
+    if state.get("revision_count", 0) > 0:
+        user_content += f"\n\n--- Revision {state['revision_count']} — your previous code fix was rejected ---\n"
+        # act on the reason you were sent back - tests failed or review rejected
+        if not state.get("tests_passed", True):
+            user_content += f"\nFailing tests:\n{state['test_results']}\n"
+        elif state.get("review_verdict") == "reject":
+            user_content += f"\nReviewer feedback:\n{state['review_feedback']}\n"
+        user_content += f"\nYour current diff so far:\n{state['diff']}\n"
 
     agent = _create_agent(_get_client())
-    response = agent.invoke({"messages": [HumanMessage(content=user_content)]})
+    agent.invoke({"messages": [HumanMessage(content=user_content)]})
 
     change = GitRepo(state["repo_path"]).diff()
     logger.info("Coder produced a diff of %d chars", len(change))

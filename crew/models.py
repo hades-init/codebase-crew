@@ -22,5 +22,10 @@ class Plan(BaseModel):
 
 
 class Review(BaseModel):
-    verdict: Literal["approve", "reject"]
-    feedback: str
+    verdict: Literal["approve", "reject"] = Field(
+        description="`approve` if the change is ready to open as a PR; otherwise `reject`."
+    )
+    feedback: str = Field(
+        description="Specific, actionable feedback for the coder (name files/changes). "
+        "Required when rejecting; a brief rationale when approving."
+    )

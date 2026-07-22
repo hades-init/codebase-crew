@@ -4,13 +4,13 @@ from crew.state import State
 
 def comment(state: State):
     issue = get_issue(state["issue_number"])
-    issue_comment = issue.create_comment(f"Triage: {state['issue_type']}")
-    issue.add_to_labels(IssueLabel.TRIAGED_LABEL.value)
+    issue_comment = issue.create_comment(state["comment"])
+    issue.add_to_labels(*state["labels"])
     return {
         "messages": [
             {
                 "node": "commenter",
-                "content": f"comment created: id={issue_comment.id}, labels=[{IssueLabel.TRIAGED_LABEL.value}]",
+                "content": f"comment created: id={issue_comment.id}, labels={state['labels']}",
             }
         ]
     }
