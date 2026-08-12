@@ -4,7 +4,7 @@ A multi-agent crew (built on **LangGraph**) that reads GitHub issues, plans and 
 fixes, tests them, reviews its own work, and opens pull requests.
 
 
-
+```
                           ┌─────────────┐
    GitHub issue  ──────▶  │   Triager   │  classify + gather context
                           └──────┬──────┘
@@ -26,3 +26,4 @@ fixes, tests them, reviews its own work, and opens pull requests.
                           ┌──────▼──────┐
                           │  PR Agent   │  open PR  ◀── human gate
                           └─────────────┘
+```
